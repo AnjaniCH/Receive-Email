@@ -20,17 +20,17 @@ import org.springframework.messaging.Message;
 
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
+import org.springframework.context.annotation.DependsOn;
 
 @Configuration
 @EnableIntegration
+@DependsOn("applicationConfigurations")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MailReceiverConfig {
 
     static final Logger log = LoggerFactory.getLogger(MailReceiverConfig.class);
 
     final ReceiveMailService receiveMailService;
-    
-    
     
     public MailReceiverConfig(ReceiveMailService receiveMailService) {
         this.receiveMailService = receiveMailService;
@@ -51,7 +51,7 @@ public class MailReceiverConfig {
     @Bean()
     @InboundChannelAdapter(
             channel = "receiveEmailChannel",
-            poller = @Poller(fixedDelay = "5000", taskExecutor = "asyncTaskExecutor")
+            poller = @Poller(fixedDelay = "${mail.imap.username}", taskExecutor = "asyncTaskExecutor")
     )
     public MailReceivingMessageSource mailReceivingMessageSource(MailReceiver mailReceiver) {
         MailReceivingMessageSource mailReceivingMessageSource = new MailReceivingMessageSource(mailReceiver);
