@@ -1,0 +1,16 @@
+com\mail\springbootimaplistener\config\DBPropertiesLoaderEnvironmentPostProcessor$DataBasePropertySource.class
+com\mail\springbootimaplistener\entity\Config.class
+com\mail\springbootimaplistener\config\DBPropertiesLoaderEnvironmentPostProcessor.class
+com\mail\springbootimaplistener\repository\IncomingEmailRepository.class
+com\mail\springbootimaplistener\config\MailReceiverConfig.class
+com\mail\springbootimaplistener\service\ReceiveMailService.class
+com\mail\springbootimaplistener\config\DBPropertiesLoaderEnvironmentPostProcessor$DataBasedBasedProperties.class
+com\mail\springbootimaplistener\repository\ConfigRepository.class
+com\mail\springbootimaplistener\service\ReceiveMailServiceImpl.class
+com\mail\springbootimaplistener\entity\Config$ConfigBuilder.class
+com\mail\springbootimaplistener\entity\IncomingEmailAttachments.class
+com\mail\springbootimaplistener\entity\IncomingEmails.class
+com\mail\springbootimaplistener\repository\IncomingEmailAttachmentRepository.class
+com\mail\springbootimaplistener\SpringBootImapListenerApplication.class
+com\mail\springbootimaplistener\config\ApplicationConfigurations.class
+com\mail\springbootimaplistener\config\AsyncConfig.class
