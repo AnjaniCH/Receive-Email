@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "config")
-public class Config implements Serializable {
+public class Config{
 
     @Id
     @Column(name = "name")

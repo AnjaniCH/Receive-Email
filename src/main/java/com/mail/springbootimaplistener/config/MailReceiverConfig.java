@@ -51,7 +51,7 @@ public class MailReceiverConfig {
     @Bean()
     @InboundChannelAdapter(
             channel = "receiveEmailChannel",
-            poller = @Poller(fixedDelay = "${mail.imap.username}", taskExecutor = "asyncTaskExecutor")
+            poller = @Poller(fixedDelay = "5000", taskExecutor = "asyncTaskExecutor")
     )
     public MailReceivingMessageSource mailReceivingMessageSource(MailReceiver mailReceiver) {
         MailReceivingMessageSource mailReceivingMessageSource = new MailReceivingMessageSource(mailReceiver);
@@ -72,6 +72,8 @@ public class MailReceiverConfig {
         javaMailProperties.put("mail.imap.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
         javaMailProperties.put("mail.imap.socketFactory.fallback", false);
         javaMailProperties.put("mail.store.protocol", "imaps");
+        javaMailProperties.put("mail.imaps.partialfetch", "false");
+        javaMailProperties.put("mail.mime.base64.ignoreerrors", "true");
         javaMailProperties.put("mail.debug", true);
 
         imapMailReceiver.setJavaMailProperties(javaMailProperties);

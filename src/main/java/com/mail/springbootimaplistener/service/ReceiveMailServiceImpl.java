@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
 
-import com.mail.springbootimaplistener.entity.IncomingEmail;
-import com.mail.springbootimaplistener.entity.IncomingEmailAttachment;
+import com.mail.springbootimaplistener.entity.IncomingEmails;
+import com.mail.springbootimaplistener.entity.IncomingEmailAttachments;
 import com.mail.springbootimaplistener.repository.IncomingEmailRepository;
 
 import javax.mail.*;
@@ -26,6 +26,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.TimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
@@ -106,8 +109,8 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
     }
 
     private void showMailContent(MimeMessageParser mimeMessageParser) throws Exception {
-        log.debug("From: {} to: {} | Subject: {} | ReceivedDate: {}", mimeMessageParser.getFrom(), mimeMessageParser.getTo(), mimeMessageParser.getSubject(), mimeMessageParser.getMimeMessage().getReceivedDate());
-        log.debug("Mail content: {}", mimeMessageParser.getPlainContent());
+        log.debug("Sender: {} | Recipients: {} | cc: {} | Subject: {} | ReceivedTime: {}", mimeMessageParser.getFrom(), mimeMessageParser.getTo(), mimeMessageParser.getCc(), mimeMessageParser.getSubject(), mimeMessageParser.getMimeMessage().getReceivedDate());
+        log.debug("Body: {}", mimeMessageParser.getPlainContent());
 
     }
 
@@ -126,35 +129,31 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
 
                 try {
                     String sender = mimeMessageParser.getFrom();
-                    String recipient = mimeMessageParser.getTo().toString();
+                    List<Address> recipients = mimeMessageParser.getTo();
+                    String recipients2 = recipients.toString().substring(1, recipients.toString().length() - 1);
+                    List<Address> cc = mimeMessageParser.getCc();
+                    String cc2 = cc.toString().substring(1, cc.toString().length() - 1);
                     String subject = mimeMessageParser.getSubject();
                     String body = mimeMessageParser.getPlainContent();
 
-                    String received_date = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
-                    DateTimeFormatter f = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu").withLocale(Locale.US);
-                    ZonedDateTime zdt = ZonedDateTime.parse(received_date, f);
+                    String receivedTime = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
+                    Locale locale = new Locale("id", "ID");
+                    DateTimeFormatter f = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu", Locale.US);
+                    ZonedDateTime zdt = ZonedDateTime.parse(receivedTime, f);
+                    
+                    System.out.println(zdt);
 
-                    LocalDate ld = zdt.toLocalDate();
                     String localdatetime = zdt.toLocalDateTime().toString();
-                    //DateTimeFormatter fLocalDate = DateTimeFormatter.ofPattern( "dd/MM/uuuu" );
-                    //String output = ld.format( fLocalDate) ;
-
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-
                     LocalDateTime localDate = LocalDateTime.parse(localdatetime, formatter);
-                    
+
                     String t = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(localDate);
-                    
                     Timestamp ldt = Timestamp.valueOf(t);
-                    
-                    //System.out.println("format date : " + ld);
-                    //System.out.println("format date time : " + ldt);
 
-                    String file_name = dataSource.getName();
-                    String file_path = downloadedAttachmentFilePath;
+                    String fileName = dataSource.getName();
 
-                    IncomingEmail incomingEmail = new IncomingEmail(sender, subject, body, ldt);
-                    IncomingEmailAttachment incomingEmailAttachment = new IncomingEmailAttachment(file_name, file_path);
+                    IncomingEmails incomingEmail = new IncomingEmails(sender, recipients2, cc2, subject, body, ldt);
+                    IncomingEmailAttachments incomingEmailAttachment = new IncomingEmailAttachments(fileName);
                     incomingEmail.getAttachments().add(incomingEmailAttachment);
                     incomingEmailRepository.save(incomingEmail);
 
