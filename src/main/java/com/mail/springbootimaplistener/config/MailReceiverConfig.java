@@ -20,50 +20,46 @@ import org.springframework.messaging.Message;
 
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
-import org.springframework.context.annotation.DependsOn;
 
 @Configuration
 @EnableIntegration
-@DependsOn("applicationConfigurations")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MailReceiverConfig {
 
-    static final Logger log = LoggerFactory.getLogger(MailReceiverConfig.class);
+    static final Logger log= LoggerFactory.getLogger(MailReceiverConfig.class);
 
-    final ReceiveMailService receiveMailService;
-    
+      final ReceiveMailService receiveMailService;
+
+
     public MailReceiverConfig(ReceiveMailService receiveMailService) {
         this.receiveMailService = receiveMailService;
     }
-
     @ServiceActivator(inputChannel = "receiveEmailChannel")
-    public void receive(Message<?> message) {
+    public void receive(Message<?> message){
         receiveMailService.handleReceiveMail((MimeMessage) message.getPayload());
     }
-
     @Bean("receiveEmailChannel")
-    public DirectChannel defaultChannel() {
-        DirectChannel directChannel = new DirectChannel();
+    public DirectChannel defaultChannel(){
+        DirectChannel directChannel=new DirectChannel();
         directChannel.setDatatypes(javax.mail.internet.MimeMessage.class);
         return directChannel;
     }
-
     @Bean()
     @InboundChannelAdapter(
             channel = "receiveEmailChannel",
-            poller = @Poller(fixedDelay = "5000", taskExecutor = "asyncTaskExecutor")
+            poller=@Poller(fixedDelay ="5000",taskExecutor = "asyncTaskExecutor")
+
     )
-    public MailReceivingMessageSource mailReceivingMessageSource(MailReceiver mailReceiver) {
-        MailReceivingMessageSource mailReceivingMessageSource = new MailReceivingMessageSource(mailReceiver);
+    public MailReceivingMessageSource mailReceivingMessageSource(MailReceiver mailReceiver){
+        MailReceivingMessageSource mailReceivingMessageSource=new MailReceivingMessageSource(mailReceiver);
 
-        return mailReceivingMessageSource;
+    return mailReceivingMessageSource;
     }
-
     @Bean
-    public MailReceiver imapMailReceiver(@Value("imaps://${mail.imap.username}:${mail.imap.password}@${mail.imap.host}:${mail.imap.port}/inbox") String storeUrl) {
-        log.debug("IMAP Connection URL {} ", storeUrl);
+    public MailReceiver imapMailReceiver(@Value("imaps://${mail.imap.username}:${mail.imap.password}@${mail.imap.host}:${mail.imap.port}/inbox") String storeUrl){
+        log.debug("IMAP Connection URL {} ",storeUrl);
 
-        ImapMailReceiver imapMailReceiver = new ImapMailReceiver(storeUrl);
+        ImapMailReceiver imapMailReceiver=new ImapMailReceiver(storeUrl);
         imapMailReceiver.setShouldMarkMessagesAsRead(true);
         imapMailReceiver.setShouldDeleteMessages(false);
         imapMailReceiver.setMaxFetchSize(10);
@@ -78,7 +74,7 @@ public class MailReceiverConfig {
 
         imapMailReceiver.setJavaMailProperties(javaMailProperties);
 
-        return imapMailReceiver;
+        return  imapMailReceiver;
 
     }
 }

@@ -29,6 +29,7 @@ import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.logging.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
@@ -36,7 +37,7 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
 
     private static final Logger log = LoggerFactory.getLogger(ReceiveMailServiceImpl.class);
 
-    private static final String DOWNLOAD_FOLDER = "data";
+    private static final String DOWNLOAD_FOLDER = "Request";
 
     private static final String DOWNLOADED_MAIL_FOLDER = "DOWNLOADED";
 
@@ -118,11 +119,26 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
         log.debug("Email has {} attachment files", mimeMessageParser.getAttachmentList().size());
         mimeMessageParser.getAttachmentList().forEach(dataSource -> {
             if (StringUtils.isNotBlank(dataSource.getName())) {
+                String folder = null;
+                String request = null;
+                try {
+                    folder = mimeMessageParser.getSubject();
+                    request = folder.split(":")[1];
+                } catch (Exception ex) {
+                    java.util.logging.Logger.getLogger(ReceiveMailServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                LocalDate date = java.time.LocalDate.now();
+                String date2 = date.toString();
+                String date3 = date2.replace("-", "");
+                
                 String rootDirectoryPath = new FileSystemResource("").getFile().getAbsolutePath();
-                String dataFolderPath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER;
+                String dataFolderPath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request;
                 createDirectoryIfNotExists(dataFolderPath);
+                
+                String filename = dataSource.getName();
+                String filename2 = filename.substring(0, filename.lastIndexOf(".")) + "_" + date3 + filename.substring(filename.lastIndexOf("."));
 
-                String downloadedAttachmentFilePath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + dataSource.getName();
+                String downloadedAttachmentFilePath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request + File.separator + filename2;
                 File downloadedAttachmentFile = new File(downloadedAttachmentFilePath);
 
                 log.info("Save attachment file to: {}", downloadedAttachmentFilePath);
@@ -137,11 +153,11 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                     String body = mimeMessageParser.getPlainContent();
 
                     String receivedTime = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
-                    Locale locale = new Locale("id", "ID");
+                    //Locale locale = new Locale("id", "ID");
                     DateTimeFormatter f = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu", Locale.US);
                     ZonedDateTime zdt = ZonedDateTime.parse(receivedTime, f);
                     
-                    System.out.println(zdt);
+                    //System.out.println(zdt);
 
                     String localdatetime = zdt.toLocalDateTime().toString();
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
@@ -149,11 +165,9 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
 
                     String t = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(localDate);
                     Timestamp ldt = Timestamp.valueOf(t);
-
-                    String fileName = dataSource.getName();
-
+                    
                     IncomingEmails incomingEmail = new IncomingEmails(sender, recipients2, cc2, subject, body, ldt);
-                    IncomingEmailAttachments incomingEmailAttachment = new IncomingEmailAttachments(fileName);
+                    IncomingEmailAttachments incomingEmailAttachment = new IncomingEmailAttachments(filename2);
                     incomingEmail.getAttachments().add(incomingEmailAttachment);
                     incomingEmailRepository.save(incomingEmail);
 

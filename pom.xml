@@ -14,7 +14,7 @@
     <name>ReceiveEmail</name>
     <description>spring-boot-imap-listener</description>
     <properties>
-        <java.version>8</java.version>
+        <java.version>1.8</java.version>
     </properties>
     <dependencies>
         <dependency>

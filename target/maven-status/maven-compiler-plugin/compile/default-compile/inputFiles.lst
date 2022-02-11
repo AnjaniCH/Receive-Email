@@ -1,13 +1,9 @@
-D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\config\AsyncConfig.java
-D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\repository\ConfigRepository.java
-D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\config\ApplicationConfigurations.java
-D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\entity\Config.java
-D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\repository\IncomingEmailRepository.java
-D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\config\DBPropertiesLoaderEnvironmentPostProcessor.java
 D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\entity\IncomingEmails.java
+D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\config\AsyncConfig.java
 D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\service\ReceiveMailServiceImpl.java
 D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\repository\IncomingEmailAttachmentRepository.java
 D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\service\ReceiveMailService.java
+D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\repository\IncomingEmailRepository.java
 D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\entity\IncomingEmailAttachments.java
 D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\config\MailReceiverConfig.java
 D:\1\Receive-Email-Engine\src\main\java\com\mail\springbootimaplistener\SpringBootImapListenerApplication.java
