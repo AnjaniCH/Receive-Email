@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.mail.springbootimaplistener.entity.IncomingEmails;
 import com.mail.springbootimaplistener.entity.IncomingEmailAttachments;
+import com.mail.springbootimaplistener.repository.IncomingEmailAttachmentRepository;
 import com.mail.springbootimaplistener.repository.IncomingEmailRepository;
 
 import javax.mail.*;
@@ -43,6 +44,9 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
 
     @Autowired
     private IncomingEmailRepository incomingEmailRepository;
+
+    @Autowired
+    private IncomingEmailAttachmentRepository incomingEmailAttachmentRepository;
 
     @Override
     public void handleReceiveMail(MimeMessage receivedMessage) {
@@ -117,6 +121,41 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
 
     private void downloadAttachmentFiles(MimeMessageParser mimeMessageParser) throws Exception {
         log.debug("Email has {} attachment files", mimeMessageParser.getAttachmentList().size());
+
+        Timestamp ldt = null;
+
+        //try {
+        String sender = mimeMessageParser.getFrom();
+        List<Address> recipients = mimeMessageParser.getTo();
+        String recipients2 = recipients.toString().substring(1, recipients.toString().length() - 1);
+        List<Address> cc = mimeMessageParser.getCc();
+        String cc2 = cc.toString().substring(1, cc.toString().length() - 1);
+        String subject = mimeMessageParser.getSubject();
+        String body = mimeMessageParser.getPlainContent();
+
+        String receivedTime = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
+        //Locale locale = new Locale("id", "ID");
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu", Locale.US);
+        ZonedDateTime zdt = ZonedDateTime.parse(receivedTime, f);
+
+        //System.out.println(zdt);
+        String localdatetime = zdt.toLocalDateTime().toString();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+        LocalDateTime localDate = LocalDateTime.parse(localdatetime, formatter);
+
+        String t = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(localDate);
+        ldt = Timestamp.valueOf(t);
+
+        /*IncomingEmails incomingEmail = new IncomingEmails(sender, recipients2, cc2, subject, body, ldt);
+                    IncomingEmailAttachments incomingEmailAttachment = new IncomingEmailAttachments(filename2);
+                    incomingEmail.getAttachments().add(incomingEmailAttachment);
+                    incomingEmailRepository.save(incomingEmail);*/
+        incomingEmailRepository.insertIncomingEmail(sender, recipients2, cc2, subject, body, ldt);
+
+
+        /*} catch (Exception e) {
+            log.error("Failed insert data", e);
+        }*/
         mimeMessageParser.getAttachmentList().forEach(dataSource -> {
             if (StringUtils.isNotBlank(dataSource.getName())) {
                 String folder = null;
@@ -130,11 +169,11 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                 LocalDate date = java.time.LocalDate.now();
                 String date2 = date.toString();
                 String date3 = date2.replace("-", "");
-                
+
                 String rootDirectoryPath = new FileSystemResource("").getFile().getAbsolutePath();
                 String dataFolderPath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request;
                 createDirectoryIfNotExists(dataFolderPath);
-                
+
                 String filename = dataSource.getName();
                 String filename2 = filename.substring(0, filename.lastIndexOf(".")) + "_" + date3 + filename.substring(filename.lastIndexOf("."));
 
@@ -142,38 +181,25 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                 File downloadedAttachmentFile = new File(downloadedAttachmentFilePath);
 
                 log.info("Save attachment file to: {}", downloadedAttachmentFilePath);
-
                 try {
-                    String sender = mimeMessageParser.getFrom();
-                    List<Address> recipients = mimeMessageParser.getTo();
-                    String recipients2 = recipients.toString().substring(1, recipients.toString().length() - 1);
-                    List<Address> cc = mimeMessageParser.getCc();
-                    String cc2 = cc.toString().substring(1, cc.toString().length() - 1);
-                    String subject = mimeMessageParser.getSubject();
-                    String body = mimeMessageParser.getPlainContent();
-
-                    String receivedTime = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
+                    String receivedTime2 = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
                     //Locale locale = new Locale("id", "ID");
-                    DateTimeFormatter f = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu", Locale.US);
-                    ZonedDateTime zdt = ZonedDateTime.parse(receivedTime, f);
-                    
+                    DateTimeFormatter f2 = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu", Locale.US);
+                    ZonedDateTime zdt2 = ZonedDateTime.parse(receivedTime2, f2);
+
                     //System.out.println(zdt);
+                    String localdatetime2 = zdt2.toLocalDateTime().toString();
+                    DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                    LocalDateTime localDate2 = LocalDateTime.parse(localdatetime2, formatter2);
 
-                    String localdatetime = zdt.toLocalDateTime().toString();
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-                    LocalDateTime localDate = LocalDateTime.parse(localdatetime, formatter);
+                    String t2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(localDate2);
+                    Timestamp ldt2 = Timestamp.valueOf(t2);
 
-                    String t = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(localDate);
-                    Timestamp ldt = Timestamp.valueOf(t);
-                    
-                    IncomingEmails incomingEmail = new IncomingEmails(sender, recipients2, cc2, subject, body, ldt);
-                    IncomingEmailAttachments incomingEmailAttachment = new IncomingEmailAttachments(filename2);
-                    incomingEmail.getAttachments().add(incomingEmailAttachment);
-                    incomingEmailRepository.save(incomingEmail);
-
+                    incomingEmailAttachmentRepository.insertIncomingEmailAttachment(ldt2, filename2);
                 } catch (Exception e) {
                     log.error("Failed insert data", e);
                 }
+
                 try (
                         OutputStream out = new FileOutputStream(downloadedAttachmentFile) // InputStream in = dataSource.getInputStream()
                         ) {
