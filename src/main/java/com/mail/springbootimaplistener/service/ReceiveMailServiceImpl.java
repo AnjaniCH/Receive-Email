@@ -160,9 +160,11 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
             if (StringUtils.isNotBlank(dataSource.getName())) {
                 String folder = null;
                 String request = null;
+                String request2 = null;
                 try {
                     folder = mimeMessageParser.getSubject();
                     request = folder.split(":")[1];
+                    request2 = request.trim();
                 } catch (Exception ex) {
                     java.util.logging.Logger.getLogger(ReceiveMailServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -170,14 +172,15 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                 String date2 = date.toString();
                 String date3 = date2.replace("-", "");
 
-                String rootDirectoryPath = new FileSystemResource("").getFile().getAbsolutePath();
-                String dataFolderPath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request;
+                //String rootDirectoryPath = new FileSystemResource("").getFile().getAbsolutePath();
+                String rootDirectoryPath = "D:/assets";
+                String dataFolderPath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request2;
                 createDirectoryIfNotExists(dataFolderPath);
 
                 String filename = dataSource.getName();
                 String filename2 = filename.substring(0, filename.lastIndexOf(".")) + "_" + date3 + filename.substring(filename.lastIndexOf("."));
 
-                String downloadedAttachmentFilePath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request + File.separator + filename2;
+                String downloadedAttachmentFilePath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request2 + File.separator + filename2;
                 File downloadedAttachmentFile = new File(downloadedAttachmentFilePath);
 
                 log.info("Save attachment file to: {}", downloadedAttachmentFilePath);
