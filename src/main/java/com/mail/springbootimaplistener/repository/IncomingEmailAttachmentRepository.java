@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface IncomingEmailAttachmentRepository extends JpaRepository<IncomingEmailAttachments, Long> {
     @Modifying
-    @Query(value = "insert into IncomingEmailAttachments(incomingEmailId,fileName) VALUES ((SELECT incomingEmailId FROM IncomingEmails WHERE receivedTime = :receivedTime),:fileName)", nativeQuery = true)
+    @Query(value = "insert into IncomingEmailAttachments(incomingEmailId,fileName) VALUES ((SELECT incomingEmailId FROM IncomingEmails WHERE receivedTime = :receivedTime ORDER BY incomingEmailId DESC LIMIT 1),:fileName)", nativeQuery = true)
     @Transactional
     void insertIncomingEmailAttachment(@Param("receivedTime") Timestamp receivedTime, @Param("fileName") String fileName);
     

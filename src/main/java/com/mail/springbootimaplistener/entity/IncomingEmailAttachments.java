@@ -30,7 +30,7 @@ public class IncomingEmailAttachments {
     @Column(name = "incomingEmailId")
     public Long incomingEmailId;
 
-    @Column(name = "fileName")
+    @Column(name = "fileName", nullable = false)
     public String fileName;
 
     public Long getAttachmentId() {
