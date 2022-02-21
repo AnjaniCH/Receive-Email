@@ -188,16 +188,18 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                     if (StringUtils.isNotBlank(dataSource.getName())) {
                         String data = dataSource.getName();
                         List<String> documentType = documentTypeRepository.findKeywords();
-                        String getDate = null;
-                        String getNib = null;
+                        String rename_file = null;
                         String validasi = null;
                         String transformKey = null;
                         String transformKey2 = null;
-                        String outKey = null;
-                        String ketemu = null;
                         String extension = null;
-                        String digit = null;
-                        Boolean checkKeywords = true;
+                        String tempDate = null;
+                        String replace2 = null;
+                        String replace3 = null;
+                        int number = 0;
+                        String number2 = null;
+                        Boolean found = false;
+                        Boolean found2 = false;
                         int countDigit = 0;
                         Timestamp date = new Timestamp(System.currentTimeMillis());
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -215,283 +217,184 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                             System.out.println("extension : " + extension);
                             transformKey = keywords2.toUpperCase();
                             System.out.println("Uppercase keywords2 : " + transformKey);
-                            /*if (transformKey.contains("NPWP")) {
-                                Pattern p = Pattern.compile("NPWP");   // the pattern to search for
-                                Matcher m = p.matcher(docType);
-                                while (m.find()) {
-                                    ketemu = m.group();
-                                    System.out.println("Ketemu : " + ketemu);
-                                }
-                            } else if (docType.contains("NIB")) {
-                                Pattern p = Pattern.compile("NIB");   // the pattern to search for
-                                Matcher m = p.matcher(docType);
-                                while (m.find()) {
-                                    ketemu = m.group();
-                                    System.out.println("Ketemu : " + ketemu);
-                                }
-                            } else if (transformKey.contains("TDP")) {
-                                Pattern p = Pattern.compile("TDP");   // the pattern to search for
-                                Matcher m = p.matcher(docType);
-                                while (m.find()) {
-                                    ketemu = m.group();
-                                    System.out.println("Ketemu : " + ketemu);
-                                }
-                            } else if (transformKey.contains("SIUP")) {
-                                Pattern p = Pattern.compile("SIUP");   // the pattern to search for
-                                Matcher m = p.matcher(docType);
-                                while (m.find()) {
-                                    ketemu = m.group();
-                                    System.out.println("Ketemu : " + ketemu);
-                                }
-                            } else if (transformKey.contains("BAI")) {
-                                Pattern p = Pattern.compile("BAI");   // the pattern to search for
-                                Matcher m = p.matcher(docType);
-                                while (m.find()) {
-                                    ketemu = m.group();
-                                    System.out.println("Ketemu : " + ketemu);
-                                }
-                            } else if (transformKey.contains("KTP")) {
-                                Pattern p = Pattern.compile("KTP");   // the pattern to search for
-                                Matcher m = p.matcher(docType);
-                                while (m.find()) {
-                                    ketemu = m.group();
-                                    System.out.println("Ketemu : " + ketemu);
-                                }
-                            } else if (transformKey.contains("ID Card")) {
-                                Pattern p = Pattern.compile("ID Card");   // the pattern to search for
-                                Matcher m = p.matcher(docType);
-                                while (m.find()) {
-                                    ketemu = m.group();
-                                    System.out.println("Ketemu : " + ketemu);
-                                }
-                            }*/
 
-                            //System.out.println("Keywords DB : " + ketemu);
                             pass = 0;
                             System.out.println("Apakah ada koma pada keyword DB? : " + docType.contains(","));
                             if (pass == 0) {
                                 if (docType.contains(",") == true) {
                                     //Boolean keyNIB = docType.contains(ketemu);
                                     //System.out.println("Apakah ada keyword NIB pada keyword DB ? : " + keyNIB);
-                                    if (docType.contains("NIB") == true) {
-                                        String[] doc = docType.split("\\s*,\\s*");
-                                        List<String> items = Arrays.asList(doc);
-                                        //List<String> items = Arrays.asList(ketemu.split("\\s*,\\s*"));
-                                        //System.out.println("NIB,TDP sebelum displit : " + items);
-                                        for (String result : items) {
-                                            System.out.println("Result : " + result);
-                                            Boolean trans = transformKey.contains(result);
-                                            System.out.println("Filename contains result : " + trans);
-                                            if (transformKey.contains(result) == true) {
-                                                pass = 1;
-                                                //docTypeId = documentTypeRepository.getId(keywords2);
-                                                //System.out.println("DocumentTypeID : " + result);
-                                                if (result.equals("NIB")) {
-                                                    StringBuilder sb = new StringBuilder();
-                                                    boolean found = false;    
+                                    System.out.println("Doctype ada koma : " + docType);
+                                    String[] doc = docType.split("\\s*,\\s*");
+                                    List<String> items = Arrays.asList(doc);
+                                    for (String res : items) {
+                                        System.out.println("Res : " + res);
+                                        if (transformKey.contains(res) == true) {
+                                            System.out.println("Filename yang masuk : " + transformKey);
+                                            pass = 1;
+                                            if (pass == 1) {
+                                                if (documentTypeRepository.findFileNameFormat(res).contains("YYYYMMDD") == true) {
                                                     transformKey2 = transformKey.replaceAll("[^0-9]+", " ");
                                                     System.out.println("Transform Key : " + transformKey2);
-                                                    List<String> replace = Arrays.asList(transformKey2.trim().split(" "));
-                                                    /*for (char c : transformKey.toCharArray()) {
-                                                        if (Character.isDigit(c)) {
-                                                            sb.append(c);
-                                                            found = true;
-                                                        } else if (found) {
-                                                            // If we already found a digit before and this char is not a digit, stop looping
-                                                            break;
-                                                        }
-                                                    }*/
-                                                    digit = replace.toString().substring(1, replace.toString().length() - 1);
-                                                    System.out.println("Digit : " + digit);
-
-                                                    if (digit != null) {
-                                                        //String str = "plane,cat,red,dogy";
-                                                        for (String subString : digit.split(",")) {
-                                                            
-                                                            for (int i = 0; i < subString.length(); i++) {
-                                                                if (subString.charAt(i) != ' ') {
+                                                    if (transformKey2 != null) {
+                                                        List<String> replace = Arrays.asList(transformKey2.trim().split(" "));
+                                                        replace2 = replace.toString().substring(1, replace.toString().length() - 1);
+                                                        System.out.println("Replace2 : " + replace2);
+                                                        if (replace2 != null) {
+                                                            //for (String replace2 : replace) {
+                                                            //for (String subString : replace2.trim().split(",")) {
+                                                            /*for (int i = 0, len = replace2.length(); i < len; i++) {
+                                                                if (Character.isDigit(replace2.charAt(i))) {
                                                                     countDigit++;
+                                                                    break;
+                                                                }
+                                                            }*/
+                                                            //}
+                                                            String wordsWithQuotes[] = replace2.split(",");
+                                                            number = wordsWithQuotes.length;
+                                                            number2 = String.valueOf(number);
+                                                            //System.out.println("no of words = " + wordsWithQuotes.length);
+                                                            System.out.println("Count Digit : " + number2);
+                                                            for (String s : wordsWithQuotes) {
+                                                                String[] s2 = s.trim().split(" ");
+                                                                for (String results : s2) {
+                                                                    if (results.length() == 8) {
+                                                                        System.out.println("Results yang mengandung 8 digit : " + results);
+
+                                                                        try {
+                                                                            System.out.println("Transform Key 2 : " + transformKey);
+                                                                            tempDate = results;
+                                                                            System.out.println("TempDate : " + results);
+                                                                            DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMdd");
+                                                                            LocalDate ld = LocalDate.parse(results, format);
+
+                                                                            String ld2 = String.valueOf(ld);
+                                                                            validasi = ld2.replace("-", "");
+                                                                            System.out.println("LocalDate : " + ld2);
+                                                                            System.out.println("LocalDate Remove (-) : " + validasi);
+
+                                                                        } catch (DateTimeParseException excep) {
+                                                                            System.out.println("Error date format : " + excep);
+                                                                        }
+                                                                        
+                                                                        if (validasi != null) {
+                                                                            rename_file = res + "_" + validasi + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                        } else {
+                                                                            rename_file = res + "_" + "99991231" + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                        }
+                                                                        
+                                                                    } else {
+                                                                        rename_file = res + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                    }
+                                                                    //break;
                                                                 }
                                                             }
                                                         }
-                                                        //String digit2[] = digit.split(" ");
-                                                        /*List<String> al = Arrays.asList(digit);
-                                                        String al2 = al.toString().substring(1, al.toString().length() - 1);
-                                                        System.out.println("Al2 : " + al2);*/
-
-                                                        System.out.println("Count Digit : " + countDigit);
-                                                        if (countDigit == 8) {
-                                                            try {
-                                                                DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMdd");
-                                                                //convert String to LocalDate
-                                                                LocalDate ld = LocalDate.parse(digit, format);
-                                                                
-                                                                //REVISI
-                                                                ////////////////////////////////////////////////////////////////
-                                                                String ld2 = String.valueOf(ld);
-                                                                String ld3 = ld2.replace("-", "");
-                                                                System.out.println("LocalDate : " + ld2);
-                                                                System.out.println("LocalDate Remove (-) : " + ld3);
-                                                                
-                                                                if(ld == null){
-                                                                    
-                                                                }
-                                                                ///////////////////////////////////////////////////////////////
-                                                                DateTimeFormatter format2 = DateTimeFormatter.ofPattern("yyyyMMdd");
-                                                                validasi = ld.format(format2);
-
-                                                                System.out.println("Validasi : " + validasi);
-                                                                Boolean valid = transformKey.contains(validasi);
-                                                                System.out.println("Apakah file valid ? : " + valid);
-                                                                if (transformKey.contains(result) == true && transformKey.contains(digit) == true && valid == true && digit.equals(validasi)) {
-                                                                    System.out.println("Data terverifikasi : " + result);
-                                                                    getNib = keywords2 + "_" + date2 + data.substring(data.lastIndexOf("."));
-                                                                    System.out.println("Data dengan expiration date ditambah date hari ini : " + getNib);
-                                                                } else {
-                                                                    System.out.println("not matched");
-                                                                    SimpleMailMessage msg = new SimpleMailMessage();
-
-                                                                    msg.setFrom(recipients2);
-                                                                    msg.setTo(sender);
-
-                                                                    msg.setSubject("Document contain wrong date format");
-                                                                    msg.setText("Hello. Please send the document with valid date format {YYYYMMDD}");
-
-                                                                    javaMailSender.send(msg);
-                                                                }
-                                                            } catch (DateTimeParseException excep) {
-                                                                System.out.println("Error date format : " + excep);
-                                                                //throw new IllegalArgumentException("Not able to parse the date for all patterns given");
-                                                                System.out.println("not matched");
-                                                                SimpleMailMessage msg = new SimpleMailMessage();
-
-                                                                msg.setFrom(recipients2);
-                                                                msg.setTo(sender);
-
-                                                                msg.setSubject("Document contain wrong date format");
-                                                                msg.setText("Hello. Please send the document with valid date format {YYYYMMDD}");
-
-                                                                javaMailSender.send(msg);
-                                                            }
-
-                                                        } else {
-                                                            getNib = data.substring(0, data.lastIndexOf(".")) + "_" + "99991231" + "_" + date2 + data.substring(data.lastIndexOf("."));
-                                                        }
-                                                        /*//validasi expired time
-                                                        System.out.println("Result NIB : " + result);
-                                                        getDate = data.substring(data.lastIndexOf("_") + 1, data.indexOf("."));
-                                                        System.out.println("Expired Date : " + getDate);
-                                                        int countDate = 0;
-                                                        int sizeDate = 8;
-                                                        for (int i = 0; i < getDate.length(); i++) {
-                                                            if (getDate.charAt(i) != ' ') {
-                                                                countDate++;
-                                                            }
-                                                        }
-                                                        DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMdd");
-                                                        //convert String to LocalDate
-                                                        LocalDate ld = LocalDate.parse(getDate, formatter);
-
-                                                        DateTimeFormatter format2 = DateTimeFormatter.ofPattern("yyyyMMdd");
-                                                        validasi = ld.format(format2);
-                                                        //String validasi = validasiFormat.format(getDate);
-                                                        System.out.println("Validasi : " + validasi);*/
-
-                                                    } else {
-                                                        getNib = data.substring(0, data.lastIndexOf(".")) + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                     }
-                                                } else if (result.equals("TDP")) {
-                                                    System.out.println("Result TDP : " + result);
+                                                    //break;
                                                 }
-
                                             }
+                                            //break;
                                         }
                                     }
-                                    /*else if (keywords2.contains("KTP,ID Card")) {
-                                        List<String> items2 = Arrays.asList(keywords2.split("\\s*,\\s*"));
-                                        for (String result : items2) {
-                                            if (data.contains(result) == true) {
-                                                pass = 1;
-                                                docTypeId = documentTypeRepository.getId(keywords2);
-                                            }
-                                        }
-                                    } else {
+                                    //break;
+                                } else {
+                                    System.out.println("DocType tanpa comma : " + docType);
+                                    List<String> items2 = Arrays.asList(docType);
+                                    
+                                    for (String res : items2) {
+                                        System.out.println("Res : " + res);
+                                        if (transformKey.contains(res) == true) {
+                                            System.out.println("Filename yang masuk : " + transformKey);
+                                            pass = 1;
+                                            if (pass == 1) {
+                                                if (documentTypeRepository.findFileNameFormat(res).contains("YYYYMMDD") == true) {
+                                                    transformKey2 = transformKey.replaceAll("[^0-9]+", " ");
+                                                    System.out.println("Transform Key : " + transformKey2);
+                                                    if (transformKey2 != null) {
+                                                        List<String> replace = Arrays.asList(transformKey2.trim().split(" "));
+                                                        replace2 = replace.toString().substring(1, replace.toString().length() - 1);
+                                                        System.out.println("Replace2 : " + replace2);
+                                                        if (replace2 != null) {
+                                                            //for (String replace2 : replace) {
+                                                            //for (String subString : replace2.trim().split(",")) {
+                                                            /*for (int i = 0, len = replace2.length(); i < len; i++) {
+                                                                if (Character.isDigit(replace2.charAt(i))) {
+                                                                    countDigit++;
+                                                                    break;
+                                                                }
+                                                            }*/
+                                                            //}
+                                                            String wordsWithQuotes[] = replace2.split(",");
+                                                            number = wordsWithQuotes.length;
+                                                            number2 = String.valueOf(number);
+                                                            //System.out.println("no of words = " + wordsWithQuotes.length);
+                                                            System.out.println("Count Digit : " + number2);
+                                                            for (String s : wordsWithQuotes) {
+                                                                String[] s2 = s.trim().split(" ");
+                                                                for (String results : s2) {
+                                                                    if (results.length() == 8) {
+                                                                        System.out.println("Results yang mengandung 8 digit : " + results);
 
-                                    }*/
+                                                                        try {
+                                                                            System.out.println("Transform Key 2 : " + transformKey);
+                                                                            tempDate = results;
+                                                                            System.out.println("TempDate : " + results);
+                                                                            DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMdd");
+                                                                            LocalDate ld = LocalDate.parse(results, format);
+
+                                                                            String ld2 = String.valueOf(ld);
+                                                                            validasi = ld2.replace("-", "");
+                                                                            System.out.println("LocalDate : " + ld2);
+                                                                            System.out.println("LocalDate Remove (-) : " + validasi);
+
+                                                                        } catch (DateTimeParseException excep) {
+                                                                            System.out.println("Error date format : " + excep);
+                                                                        }
+                                                                        
+                                                                        if (validasi != null) {
+                                                                            rename_file = res + "_" + validasi + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                        } else {
+                                                                            rename_file = res + "_" + "99991231" + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                        }
+                                                                        
+                                                                    } else {
+                                                                        rename_file = res + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                    }
+                                                                    //break;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    //break;
+                                                } else {
+                                                    rename_file = res + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                }
+                                            }
+                                        } /*else if(transformKey.contains(res) == false){
+                                            System.out.println("File does not contain any keyword");
+                                            SimpleMailMessage msg = new SimpleMailMessage();
+
+                                            msg.setFrom(recipients2);
+                                            msg.setTo(sender);
+
+                                            msg.setSubject("Document's file name didn't matched");
+                                            msg.setText("Hello. Please send the document according rules and if there is an expired date, please provide it with a valid date format {YYYYMMDD}. Thank you :)");
+
+                                            javaMailSender.send(msg);
+                                        }*/
+                                        else {
+                                            System.out.println("Tidak ada");
+                                        }
+                                        
+                                    }
+                                    
                                 }
                             }
                         }
 
                         System.out.println(data);
 
-                        String newdata = null;
-                        String getNpwp = null;
-
-                        String getSiup = null;
-                        String getBai = null;
-                        String keywords = null;
-                        String file_name = null;
-                        String ext = null;
-
-                        /*if (data.contains("_") == true) {
-                            getDate = data.substring(data.lastIndexOf("_") + 1, data.indexOf("."));
-                            System.out.println(getDate);
-                            int count2 = 0;
-                            int size = 8;
-                            for (int i = 0; i < getDate.length(); i++) {
-                                if (getDate.charAt(i) != ' ') {
-                                    count2++;
-                                }
-                            }
-                            keywords = data.substring(0, data.indexOf("_"));
-                            //String gabung = keywords + "_" + getDate + ".pdf";
-                            file_name = documentTypeRepository.findFileNameFormat(keywords);
-                            if (keywords.equals("NIB") && file_name.contains("NIB_${YYYYMMDD}") == true && count2 == 8) {
-                                System.out.println(file_name);
-                                String getNib2 = file_name.replaceAll("(?i)\\s*(?:\\$\\{YYYYMMDD\\}?)", getDate);
-                                System.out.println(getNib2);
-                                getNib = getNib2.substring(0, getNib2.lastIndexOf(".")) + "_" + date2 + getNib2.substring(getNib2.lastIndexOf("."));
-                                System.out.println(getNib);
-                            } else if (keywords.equals("SIUP") && file_name.contains("SIUP_${YYYYMMDD}") == true && count2 == 8) {
-                                System.out.println(file_name);
-                                String getSiup2 = file_name.replaceAll("(?i)\\s*(?:\\$\\{YYYYMMDD\\}?)", getDate);
-                                System.out.println(getSiup2);
-                                getSiup = getSiup2.substring(0, getSiup2.lastIndexOf(".")) + "_" + date2 + getSiup2.substring(getSiup2.lastIndexOf("."));
-                                System.out.println(getSiup);
-                            } else if (keywords.isEmpty() || keywords == null && file_name.isEmpty() || file_name == null && count2 > size) {
-                                System.out.println("not matched");
-                                SimpleMailMessage msg = new SimpleMailMessage();
-
-                                msg.setFrom(recipients2);
-                                msg.setTo(sender);
-
-                                msg.setSubject("Document cannot be identified");
-                                msg.setText("Hello. Please send the document according to the email template, thank you");
-
-                                javaMailSender.send(msg);
-                            }
-                        } else {
-                            keywords = data.substring(0, data.indexOf("."));
-                            file_name = documentTypeRepository.findFileNameFormat(keywords);
-                            if (keywords.equals("NPWP") && file_name.contains("NPWP") == true) {
-                                getNpwp = file_name.substring(0, file_name.lastIndexOf(".")) + "_" + date2 + file_name.substring(file_name.lastIndexOf("."));
-                                System.out.println(getNpwp);
-                            } else if (keywords.equals("BAI") && file_name.contains("BAI") == true) {
-                                getBai = file_name.substring(0, file_name.lastIndexOf(".")) + "_" + date2 + file_name.substring(file_name.lastIndexOf("."));
-                                System.out.println(getBai);
-                            } else if (keywords.isEmpty() || keywords == null && file_name.isEmpty() || file_name == null) {
-                                System.out.println("not matched");
-                                SimpleMailMessage msg = new SimpleMailMessage();
-
-                                msg.setFrom(recipients2);
-                                msg.setTo(sender);
-
-                                msg.setSubject("Document cannot be identified");
-                                msg.setText("Hello. Please send the document according to the email template, thank you");
-
-                                javaMailSender.send(msg);
-                            }
-                        }*/
                         String folder = null;
                         String request = null;
                         String request2 = null;
@@ -508,8 +411,8 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                         String dataFolderPath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request2;
                         createDirectoryIfNotExists(dataFolderPath);
 
-                        List<String> addFile = new ArrayList<String>(Arrays.asList(getNib));
-                        addFile.removeAll(Arrays.asList(" ", "", null));
+                        List<String> addFile = new ArrayList<String>(Arrays.asList(rename_file));
+                        //addFile.removeAll(Arrays.asList(" ", "", null));
                         //addFile.removeIf(o->o == null);
                         //List<String> listWithoutNulls = addFile.parallelStream().filter(Objects::nonNull).collect(Collectors.toList());
                         //addFile.removeIf(Objects::isNull);
