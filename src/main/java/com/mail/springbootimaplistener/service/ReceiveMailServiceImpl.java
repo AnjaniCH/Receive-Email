@@ -1,5 +1,6 @@
 package com.mail.springbootimaplistener.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.fasterxml.jackson.databind.type.LogicalType.DateTime;
 import com.mail.springbootimaplistener.entity.DocumentTypes;
 import org.apache.commons.io.IOUtils;
@@ -16,6 +17,7 @@ import com.mail.springbootimaplistener.repository.DocumentTypeRepository;
 import com.mail.springbootimaplistener.repository.IncomingEmailAttachmentRepository;
 import com.mail.springbootimaplistener.repository.IncomingEmailRepository;
 import com.mail.springbootimaplistener.repository.VendorRepository;
+import com.mail.springbootimaplistener.response.ResponseHandler;
 
 import javax.mail.*;
 import javax.mail.internet.MimeMessage;
@@ -35,7 +37,10 @@ import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -43,8 +48,14 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.web.client.RestTemplate;
 import org.wildfly.common.Assert;
 
 @Service
@@ -70,6 +81,9 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
 
     @Autowired
     private JavaMailSender javaMailSender;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Override
     public void handleReceiveMail(MimeMessage receivedMessage) {
@@ -159,9 +173,9 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
         }
         //Jika subject mengandung pesan "Document Request" dan id:<string dengan panjang 36 karakter> maka email ini diidentifikasi berasal dari vendor
         if (documentRequest == true && count == 36) {
-            String find = vendorRepository.findVendorId(vendorId);
-            System.out.println("Vendor Id : " + find);
-            if (!find.isEmpty()) { //Jika vendor id ditemukan
+            String vendor = vendorRepository.findVendorId(vendorId);
+            System.out.println("Vendor Id : " + vendor);
+            if (!vendor.isEmpty()) { //Jika vendor id ditemukan
                 String sender = mimeMessageParser.getFrom();
                 List<Address> recipients = mimeMessageParser.getTo();
                 String recipients2 = recipients.toString().substring(1, recipients.toString().length() - 1);
@@ -183,6 +197,8 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                 ldt = Timestamp.valueOf(t);
 
                 incomingEmailRepository.insertIncomingEmail(sender, recipients2, cc2, subject, body, ldt);
+
+                Map<String, Object> requestAPI = new HashMap<>();
                 //foreach attachment
                 mimeMessageParser.getAttachmentList().forEach(dataSource -> {
                     if (StringUtils.isNotBlank(dataSource.getName())) {
@@ -193,13 +209,14 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                         String transformKey = null;
                         String transformKey2 = null;
                         String extension = null;
+                        int documentTypeId = 0;
+                        String expired_date = null;
                         String tempDate = null;
                         String replace2 = null;
                         String replace3 = null;
                         int number = 0;
                         String number2 = null;
-                        Boolean found = false;
-                        Boolean found2 = false;
+                        String vendorIdVendDoc = null;
                         int countDigit = 0;
                         Timestamp date = new Timestamp(System.currentTimeMillis());
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -208,7 +225,7 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                         for (String docType : documentType) {
                             String keywords2 = null;
                             int pass = 0;
-                            int docTypeId = 0;
+                            documentTypeId = documentTypeRepository.getId(docType);
                             System.out.println("docType : " + docType);
 
                             keywords2 = data.substring(0, data.indexOf("."));
@@ -276,13 +293,15 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                                                                         } catch (DateTimeParseException excep) {
                                                                             System.out.println("Error date format : " + excep);
                                                                         }
-                                                                        
+
                                                                         if (validasi != null) {
-                                                                            rename_file = res + "_" + validasi + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                            expired_date = validasi;
+                                                                            rename_file = res + "_" + expired_date + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                                         } else {
-                                                                            rename_file = res + "_" + "99991231" + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                            expired_date = "99991231";
+                                                                            rename_file = res + "_" + expired_date + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                                         }
-                                                                        
+
                                                                     } else {
                                                                         rename_file = res + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                                     }
@@ -292,6 +311,8 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                                                         }
                                                     }
                                                     //break;
+                                                } else {
+                                                    rename_file = res + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                 }
                                             }
                                             //break;
@@ -301,7 +322,7 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                                 } else {
                                     System.out.println("DocType tanpa comma : " + docType);
                                     List<String> items2 = Arrays.asList(docType);
-                                    
+
                                     for (String res : items2) {
                                         System.out.println("Res : " + res);
                                         if (transformKey.contains(res) == true) {
@@ -351,13 +372,15 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                                                                         } catch (DateTimeParseException excep) {
                                                                             System.out.println("Error date format : " + excep);
                                                                         }
-                                                                        
+
                                                                         if (validasi != null) {
-                                                                            rename_file = res + "_" + validasi + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                            expired_date = validasi;
+                                                                            rename_file = res + "_" + expired_date + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                                         } else {
-                                                                            rename_file = res + "_" + "99991231" + "_" + date2 + data.substring(data.lastIndexOf("."));
+                                                                            expired_date = "99991231";
+                                                                            rename_file = res + "_" + expired_date + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                                         }
-                                                                        
+
                                                                     } else {
                                                                         rename_file = res + "_" + date2 + data.substring(data.lastIndexOf("."));
                                                                     }
@@ -382,13 +405,12 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                                             msg.setText("Hello. Please send the document according rules and if there is an expired date, please provide it with a valid date format {YYYYMMDD}. Thank you :)");
 
                                             javaMailSender.send(msg);
-                                        }*/
-                                        else {
+                                        }*/ else {
                                             System.out.println("Tidak ada");
                                         }
-                                        
+
                                     }
-                                    
+
                                 }
                             }
                         }
@@ -411,53 +433,83 @@ public class ReceiveMailServiceImpl implements ReceiveMailService {
                         String dataFolderPath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request2;
                         createDirectoryIfNotExists(dataFolderPath);
 
-                        List<String> addFile = new ArrayList<String>(Arrays.asList(rename_file));
-                        //addFile.removeAll(Arrays.asList(" ", "", null));
-                        //addFile.removeIf(o->o == null);
-                        //List<String> listWithoutNulls = addFile.parallelStream().filter(Objects::nonNull).collect(Collectors.toList());
-                        //addFile.removeIf(Objects::isNull);
-                        //List<String> hasil = addFile.stream().filter(Objects::nonNull).collect(Collectors.toList());
-                        //strings.stream().filter(string -> !string.isEmpty()).collect(Collectors.toList());
-                        //List<String> filtered = deleteEmptyStrings(addFile);
-                        //filtered = filtered.stream().filter(d -> d != null).collect(Collectors.toList());
+                        if (rename_file != null) {
 
-                        String addFile2 = addFile.toString().substring(1, addFile.toString().length() - 1);
+                            List<String> addFile = new ArrayList<String>(Arrays.asList(rename_file));
+                            String addFile2 = addFile.toString().substring(1, addFile.toString().length() - 1);
 
-                        //String filename = dataSource.getName();
-                        //String filename2 = addFile2.substring(0, addFile2.lastIndexOf(".")) + "_" + date2 + addFile2.substring(addFile2.lastIndexOf("."));
-                        String downloadedAttachmentFilePath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request2 + File.separator + addFile2;
-                        File downloadedAttachmentFile = new File(downloadedAttachmentFilePath);
+                            //String filename = dataSource.getName();
+                            //String filename2 = addFile2.substring(0, addFile2.lastIndexOf(".")) + "_" + date2 + addFile2.substring(addFile2.lastIndexOf("."));
+                            String downloadedAttachmentFilePath = rootDirectoryPath + File.separator + DOWNLOAD_FOLDER + File.separator + request2 + File.separator + addFile2;
+                            File downloadedAttachmentFile = new File(downloadedAttachmentFilePath);
 
-                        log.info("Save attachment file to: {}", downloadedAttachmentFilePath);
-                        try {
-                            String receivedTime2 = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
-                            //Locale locale = new Locale("id", "ID");
-                            DateTimeFormatter f2 = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu", Locale.US);
-                            ZonedDateTime zdt2 = ZonedDateTime.parse(receivedTime2, f2);
+                            log.info("Save attachment file to: {}", downloadedAttachmentFilePath);
 
-                            //System.out.println(zdt);
-                            String localdatetime2 = zdt2.toLocalDateTime().toString();
-                            DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-                            LocalDateTime localDate2 = LocalDateTime.parse(localdatetime2, formatter2);
+                            Timestamp sentTime2 = new Timestamp(System.currentTimeMillis());
+                            String now = String.valueOf(sentTime2);
+                            System.out.println("Now : " + now);
 
-                            String t2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(localDate2);
-                            Timestamp ldt2 = Timestamp.valueOf(t2);
+                            requestAPI.put("vendorId", vendor);
+                            requestAPI.put("documentTypeId", documentTypeId);
+                            requestAPI.put("fileName", addFile2);
+                            requestAPI.put("expiryDate", expired_date);
+                            requestAPI.put("receivedTime", now);
 
-                            incomingEmailAttachmentRepository.insertIncomingEmailAttachment(ldt2, addFile2);
-                        } catch (Exception e) {
-                            log.error("Failed insert data", e);
+                            ObjectMapper mapper = new ObjectMapper();
+                            String clientFilterJson = "";
+                            try {
+                                clientFilterJson = mapper.writeValueAsString(requestAPI);
+                                System.out.println("Client filter json : " + clientFilterJson);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                            try {
+                                String receivedTime2 = mimeMessageParser.getMimeMessage().getReceivedDate().toString();
+                                //Locale locale = new Locale("id", "ID");
+                                DateTimeFormatter f2 = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu", Locale.US);
+                                ZonedDateTime zdt2 = ZonedDateTime.parse(receivedTime2, f2);
+
+                                //System.out.println(zdt);
+                                String localdatetime2 = zdt2.toLocalDateTime().toString();
+                                DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                                LocalDateTime localDate2 = LocalDateTime.parse(localdatetime2, formatter2);
+
+                                String t2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(localDate2);
+                                Timestamp ldt2 = Timestamp.valueOf(t2);
+
+                                incomingEmailAttachmentRepository.insertIncomingEmailAttachment(ldt2, addFile2);
+                            } catch (Exception e) {
+                                log.error("Failed insert data", e);
+                            }
+
+                            try (
+                                    OutputStream out = new FileOutputStream(downloadedAttachmentFile) // InputStream in = dataSource.getInputStream()
+                                    ) {
+                                InputStream in = dataSource.getInputStream();
+                                IOUtils.copy(in, out);
+                            } catch (IOException e) {
+                                log.error("Failed to save file.", e);
+                            }
                         }
 
-                        try (
-                                OutputStream out = new FileOutputStream(downloadedAttachmentFile) // InputStream in = dataSource.getInputStream()
-                                ) {
-                            InputStream in = dataSource.getInputStream();
-                            IOUtils.copy(in, out);
-                        } catch (IOException e) {
-                            log.error("Failed to save file.", e);
-                        }
                     }
                 });
+                /*// create headers
+                HttpHeaders headers = new HttpHeaders();
+                // set `content-type` header
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                // set `accept` header
+                headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+                // build the request
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestAPI, headers);
+
+                // send POST request
+                ResponseEntity<String> response = restTemplate.postForEntity("http://156.67.219.250:7070/api/vendor/document/receive", entity, String.class);
+                
+                System.out.println("Response : " + response);//ResponseHandler.generateResponse(true, HttpStatus.OK, null, response);
+                 */
             }
 
         }
